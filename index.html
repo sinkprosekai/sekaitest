@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>프로세카 캐릭터 테스트</title>
+
+<style>
+body {
+  margin:0;
+  font-family:'Pretendard', sans-serif;
+  text-align:center;
+  background:linear-gradient(180deg,#f7f8ff,#e9ecff);
+}
+
+.container { display:none; padding:20px; }
+.active { display:block; }
+
+#start { position:relative; height:100vh; }
+.title {
+  position:absolute;
+  top:28%;
+  width:100%;
+  font-size:36px;
+  font-weight:800;
+}
+.start-btn {
+  position:absolute;
+  top:45%;
+  left:50%;
+  transform:translateX(-50%);
+  padding:16px 42px;
+  border-radius:14px;
+  border:none;
+  background:#5b6cff;
+  color:white;
+  cursor:pointer;
+}
+
+.question {
+  font-size:22px;
+  margin-top:40px;
+  font-weight:700;
+}
+.answer-btn {
+  display:block;
+  margin:12px auto;
+  padding:14px;
+  width:85%;
+  border-radius:12px;
+  background:white;
+  border:none;
+  box-shadow:0 3px 8px rgba(0,0,0,0.1);
+  cursor:pointer;
+}
+
+.progress-container {
+  position:fixed;
+  bottom:0;
+  width:100%;
+  background:#ddd;
+}
+.progress-bar {
+  height:8px;
+  background:#5b6cff;
+  width:0%;
+}
+
+.result-title {
+  position:absolute;
+  top:15px;
+  left:15px;
+  font-size:14px;
+  opacity:0.7;
+}
+.result-unit { width:120px; margin-top:30px; }
+.result-char { width:260px; margin-top:20px; }
+.result-name { font-size:26px; font-weight:bold; margin-top:20px; }
+.result-btn {
+  margin:10px;
+  padding:12px 20px;
+  border:none;
+  border-radius:10px;
+  background:#5b6cff;
+  color:white;
+  cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div id="start" class="container active">
+  <div class="title">프로세카 캐릭터 테스트</div>
+  <button class="start-btn" onclick="startTest()">시작하기</button>
+</div>
+
+<div id="quiz" class="container">
+  <div class="question" id="question"></div>
+  <div id="answers"></div>
+</div>
+
+<div class="progress-container">
+  <div class="progress-bar" id="progress"></div>
+</div>
+
+<div id="result" class="container">
+  <div class="result-title">나랑 가장 비슷한 캐릭터는??</div>
+  <img id="unitImg" class="result-unit">
+  <img id="charImg" class="result-char">
+  <div id="resultName" class="result-name"></div>
+
+  <br>
+  <button class="result-btn" onclick="copyLink()">링크 공유</button>
+  <button class="result-btn" onclick="saveImage()">결과 저장</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/html2canvas"></script>
+
+<script>
+let scores={};
+"abcdefghijklmnopqrst".split("").forEach(c=>scores[c]=0);
+
+const charData={
+a:{name:"오오토리 에무",unit:"wonder"},
+b:{name:"텐마 츠카사",unit:"wonder"},
+c:{name:"쿠사나기 네네",unit:"wonder"},
+d:{name:"카미시로 루이",unit:"wonder"},
+e:{name:"호시노 이치카",unit:"leo"},
+f:{name:"텐마 사키",unit:"leo"},
+g:{name:"히노모리 시호",unit:"leo"},
+h:{name:"모치즈키 호나미",unit:"leo"},
+i:{name:"모모이 아이리",unit:"mmj"},
+j:{name:"히노모리 시즈쿠",unit:"mmj"},
+k:{name:"키리타니 하루카",unit:"mmj"},
+l:{name:"하나사토 미노리",unit:"mmj"},
+m:{name:"아즈사와 코하네",unit:"vbs"},
+n:{name:"시라이시 안",unit:"vbs"},
+o:{name:"시노노메 아키토",unit:"vbs"},
+p:{name:"아오야기 토우야",unit:"vbs"},
+q:{name:"요이사키 카나데",unit:"25"},
+r:{name:"아사히나 마후유",unit:"25"},
+s:{name:"시노노메 에나",unit:"25"},
+t:{name:"아키야마 미즈키",unit:"25"}
+};
+
+const questions=[
+{q:"나는 주말에?",a:[
+{text:"나가서 노는게 최고야",score:["a","b","f","i","j","k","l","n","o","p","t","s"]},
+{text:"집에 있는게 최고야",score:["c","d","e","g","h","m","q","r"]}
+]},
+{q:"친구들과 음악활동을 한다면?",a:[
+{text:"신나게 공연",score:["a","b","c","d","i","j","k","l"]},
+{text:"노래 집중",score:["e","f","g","h","m","n","o","p","q","r","s","t"]}
+]},
+{q:"친구에게 나는?",a:[
+{text:"도움 받음",score:["a","b","c","d","f","j","l","m","p","q","r"]},
+{text:"도움 줌",score:["e","g","h","i","k","n","o","s","t"]}
+]},
+{q:"단체활동에서 나는?",a:[
+{text:"리더형",score:["b","f","i","k","l","n"]},
+{text:"열정형",score:["a","d","e","j","m","p","t"]},
+{text:"소극형",score:["c","g","h","o","q","r","s"]}
+]},
+{q:"누가 화내면?",a:[
+{text:"내가 잘못했나",score:["a","c","e","h","j","k","m","p","q","r"]},
+{text:"왜 화내?",score:["b","d","f","g","i","l","n","o","s","t"]}
+]},
+{q:"좋아하는 음악은?",a:[
+{text:"뮤지컬",score:["a","b","c","d"]},
+{text:"락",score:["e","f","g","h"]},
+{text:"댄스",score:["m","n","o","p"]},
+{text:"아이돌",score:["i","j","k","l"]},
+{text:"팝",score:["q","r","s","t"]}
+]},
+{q:"형제/자매란?",a:[
+{text:"의지",score:["a","b","f","j","l","t"]},
+{text:"챙김",score:["g","h","i","k","n","o","s"]},
+{text:"모름",score:["c","d","e","m","p","q","r"]}
+]},
+{q:"중요한 선택 순간",a:[
+{text:"감정",score:["a","b","f","l","n","t"]},
+{text:"분석",score:["d","g","i","p","q","r"]},
+{text:"상의",score:["c","e","h","j","k","m","o","s"]}
+]}
+];
+
+let current=0;
+
+function startTest(){
+  document.getElementById("start").classList.remove("active");
+  document.getElementById("quiz").classList.add("active");
+  loadQuestion();
+}
+
+function loadQuestion(){
+  let q=questions[current];
+  document.getElementById("question").innerText=q.q;
+  let box=document.getElementById("answers");
+  box.innerHTML="";
+  q.a.forEach(ans=>{
+    let btn=document.createElement("div");
+    btn.className="answer-btn";
+    btn.innerText=ans.text;
+    btn.onclick=()=>select(ans.score);
+    box.appendChild(btn);
+  });
+  document.getElementById("progress").style.width=(current/questions.length)*100+"%";
+}
+
+function select(list){
+  list.forEach(c=>scores[c]++);
+  current++;
+  if(current<questions.length) loadQuestion();
+  else showResult();
+}
+
+function showResult(){
+  document.getElementById("quiz").classList.remove("active");
+  document.getElementById("result").classList.add("active");
+  let max=Math.max(...Object.values(scores));
+  let candidates=Object.keys(scores).filter(c=>scores[c]===max);
+  let result=candidates[Math.floor(Math.random()*candidates.length)];
+  let data=charData[result];
+  document.getElementById("resultName").innerText=data.name;
+  document.getElementById("charImg").src="images/"+result+".webp";
+  document.getElementById("unitImg").src="images/unit_"+data.unit+".webp";
+}
+
+function copyLink(){
+  navigator.clipboard.writeText(location.href);
+  alert("링크 복사됨!");
+}
+
+function saveImage(){
+  html2canvas(document.getElementById("result")).then(canvas=>{
+    let link=document.createElement("a");
+    link.download="result.png";
+    link.href=canvas.toDataURL();
+    link.click();
+  });
+}
+</script>
+</body>
+</html>
